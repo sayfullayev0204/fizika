@@ -1,0 +1,551 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ assignment.title }} - O'qituvchi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Assignment Details -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-1">{{ assignment.title }}</h4>
+                            <div class="assignment-meta">
+                                <span class="badge bg-primary me-2">{{ assignment.subject.name }}</span>
+                                <span class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ assignment.created_at|date:"d.m.Y H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="assignment-actions">
+                            <button class="btn btn-outline-primary btn-sm" onclick="editAssignment()">
+                                <i class="fas fa-edit me-1"></i>Tahrirlash
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteAssignment()">
+                                <i class="fas fa-trash me-1"></i>O'chirish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="assignment-description">
+                        <h6><i class="fas fa-align-left me-2"></i>Topshiriq Tavsifi</h6>
+                        <div class="description-content">
+                            {{ assignment.description|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    {% if assignment.file %}
+                    <div class="assignment-file mt-4">
+                        <h6><i class="fas fa-paperclip me-2"></i>Qo'shimcha Fayl</h6>
+                        <div class="file-download">
+                            <a href="{{ assignment.file.url }}" class="btn btn-outline-primary" download>
+                                <i class="fas fa-download me-2"></i>
+                                {{ assignment.file.name|cut:"assignments/" }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Submissions List -->
+            <div class="card mt-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>Topshirilgan Ishlar ({{ submissions.count }})
+                    </h5>
+                    <div class="submission-filters">
+                        <select class="form-select form-select-sm" id="statusFilter">
+                            <option value="all">Barcha holat</option>
+                            <option value="graded">Baholangan</option>
+                            <option value="ungraded">Baholanmagan</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if submissions %}
+                        <div class="submissions-list">
+                            {% for submission in submissions %}
+                            <div class="submission-item {% if submission.grade %}graded{% else %}ungraded{% endif %}">
+                                <div class="submission-header">
+                                    <div class="student-info">
+                                        <div class="student-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="student-details">
+                                            <h6>{{ submission.student.first_name|default:submission.student.username }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="submission-status">
+                                        {% if submission.grade %}
+                                            <div class="grade-display">
+                                                <span class="stat-content grade-{{ submission.grade.grade }}" style="color: #059669; font-weight: bold;">
+                                                    {{ submission.grade.score }} ball
+                                                </span>
+                                                <small class="text-muted d-block">Baholangan</small>
+                                            </div>
+                                        {% else %}
+                                            <span class="badge bg-warning">Baholanmagan</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="submission-content">
+                                    {% if submission.file %}
+                                    <div class="submission-file">
+                                        <i class="fas fa-file me-2"></i>
+                                        <a href="{{ submission.file.url }}" target="_blank">
+                                            {{ submission.file.name|cut:"submissions/" }}
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if submission.comment %}
+                                    <div class="submission-comment">
+                                        <h6>O'quvchi izohi:</h6>
+                                        <p>{{ submission.comment|truncatechars:100 }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="submission-actions">
+                                    <a href="{% url 'grade_submission' submission.id %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-star me-1"></i>
+                                        {% if submission.grade %}Bahoni o'zgartirish{% else %}Baholash{% endif %}
+                                    </a>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="viewSubmission({{ submission.id }})">
+                                        <i class="fas fa-eye me-1"></i>Batafsil
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h6>Hali topshirilgan ishlar yo'q</h6>
+                            <p>O'quvchilar hali bu topshiriqni topshirmagan</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Assignment Stats -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Statistika
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <div class="stat-icon bg-primary">
+                            <i class="fas fa-users text-white"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ total_students }}</h4>
+                            <p>Jami o'quvchilar</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-success">
+                            <i class="fas fa-upload text-white"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ submissions.count }}</h4>
+                            <p>Topshirilgan</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-warning">
+                            <i class="fas fa-clock text-white"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ pending_count }}</h4>
+                            <p>Kutilayotgan</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-info">
+                            <i class="fas fa-star text-white"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4 style="color: #059669;">{{ graded_count }}</h4>
+                            <p>Baholangan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assignment Info -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Topshiriq Ma'lumotlari
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-alt me-2"></i>Muddat
+                        </div>
+                        <div class="info-value">
+                            {{ assignment.deadline|date:"d.m.Y H:i" }}
+                        </div>
+                        <div class="countdown-timer" data-deadline="{{ assignment.deadline|date:'c' }}"></div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-book me-2"></i>Fan
+                        </div>
+                        <div class="info-value">
+                            {{ assignment.subject.name }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-users me-2"></i>Guruhlar
+                        </div>
+                        <div class="info-value">
+                            {% for group in assignment.groups.all %}
+                                <span class="badge bg-secondary me-1">{{ group.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-clock me-2"></i>Yaratilgan
+                        </div>
+                        <div class="info-value">
+                            {{ assignment.created_at|date:"d.m.Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Tezkor Amallar
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="downloadAllSubmissions()">
+                            <i class="fas fa-download me-2"></i>Barcha ishlarni yuklab olish
+                        </button>
+                        <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="exportGrades()">
+                            <i class="fas fa-file-excel me-2"></i>Baholarni eksport qilish
+                        </button>
+                        <button class="btn btn-outline-info btn-sm w-100 mb-2" onclick="sendReminder()">
+                            <i class="fas fa-bell me-2"></i>Eslatma yuborish
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm w-100" onclick="extendDeadline()">
+                            <i class="fas fa-calendar-plus me-2"></i>Muddatni uzaytirish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.assignment-meta {
+    margin-top: 0.5rem;
+}
+
+.assignment-actions .btn {
+    margin-left: 0.5rem;
+}
+
+.description-content {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.file-download {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.submissions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.submission-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid #6c757d;
+    transition: all 0.3s ease;
+}
+
+.submission-item.graded {
+    border-left-color: #28a745;
+}
+
+.submission-item.ungraded {
+    border-left-color: #ffc107;
+}
+
+.submission-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.submission-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.student-info {
+    display: flex;
+    align-items: center;
+}
+
+.student-avatar {
+    width: 40px;
+    height: 40px;
+    background: #4f46e5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+}
+
+.student-details h6 {
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.grade-5 { background: linear-gradient(135deg, #10b981, #059669); }
+.grade-4 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.grade-3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.grade-2 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.submission-content {
+    margin-bottom: 1rem;
+}
+
+.submission-file {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.submission-file a {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.submission-comment {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.submission-comment h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.submission-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.stat-content h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.stat-content p {
+    color: #6c757d;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+.info-item {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .assignment-actions {
+        margin-top: 1rem;
+    }
+    
+    .submission-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .submission-status {
+        margin-top: 1rem;
+    }
+    
+    .submission-actions {
+        flex-direction: column;
+    }
+    
+    .submission-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate pending and graded counts
+    const submissions = document.querySelectorAll('.submission-item');
+    const totalStudents = {{ total_students }};
+    const submittedCount = submissions.length;
+    const gradedCount = document.querySelectorAll('.submission-item.graded').length;
+    const pendingCount = totalStudents - submittedCount;
+    
+    // Update counts in sidebar
+    document.querySelector('.stat-item:nth-child(3) h4').textContent = pendingCount;
+    document.querySelector('.stat-item:nth-child(4) h4').textContent = gradedCount;
+    
+    // Filter functionality
+    const statusFilter = document.getElementById('statusFilter');
+    statusFilter.addEventListener('change', function() {
+        const filterValue = this.value;
+        submissions.forEach(item => {
+            if (filterValue === 'all') {
+                item.style.display = 'block';
+            } else if (filterValue === 'graded' && item.classList.contains('graded')) {
+                item.style.display = 'block';
+            } else if (filterValue === 'ungraded' && item.classList.contains('ungraded')) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+});
+
+function editAssignment() {
+    showNotification('Topshiriqni tahrirlash funksiyasi tez orada qo\'shiladi!', 'info');
+}
+
+function deleteAssignment() {
+    if (confirm('Bu topshiriqni o\'chirishga ishonchingiz komilmi?')) {
+        showNotification('Topshiriq o\'chirish funksiyasi tez orada qo\'shiladi!', 'info');
+    }
+}
+
+function viewSubmission(id) {
+    showNotification('Topshirilgan ishni batafsil ko\'rish funksiyasi tez orada qo\'shiladi!', 'info');
+}
+
+function downloadAllSubmissions() {
+    showNotification('Barcha ishlarni yuklab olish funksiyasi tez orada qo\'shiladi!', 'info');
+}
+
+function exportGrades() {
+    showNotification('Baholarni eksport qilish funksiyasi tez orada qo\'shiladi!', 'info');
+}
+
+function sendReminder() {
+    showNotification('Eslatma yuborish funksiyasi tez orada qo\'shiladi!', 'info');
+}
+
+function extendDeadline() {
+    showNotification('Muddatni uzaytirish funksiyasi tez orada qo\'shiladi!', 'info');
+}
+</script>
+{% endblock %}

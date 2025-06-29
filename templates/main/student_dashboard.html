@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Talaba paneli - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3">
+        <div class="sidebar p-3">
+            <h5 class="mb-4">
+                <i class="fas fa-user-graduate me-2"></i>Talaba paneli
+            </h5>
+            <nav class="nav flex-column">
+                <a class="nav-link active" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt me-2"></i>Bosh sahifa
+                </a>
+            </nav>
+            
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+            
+            <h6 class="mb-3">Fanlarim</h6>
+            {% for subject in subjects %}
+                <a href="{% url 'subject_detail' subject.id %}" class="nav-link">
+                    <i class="fas fa-book me-2"></i>{{ subject.name }}
+                </a>
+            {% empty %}
+                <p class="text-muted small">Fanlar mavjud emas</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="col-md-9">
+        <div class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Xush kelibsiz, {{ user.get_full_name }}!</h2>
+            </div>
+            
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-users fa-2x me-3"></i>
+                            <div>
+                                <h5 class="mb-0">{{ user_group.name|default:"Guruh yo'q" }}</h5>
+                                <p class="mb-0">Mening guruhim</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-book fa-2x me-3"></i>
+                            <div>
+                                <h3 class="mb-0">{{ subjects.count }}</h3>
+                                <p class="mb-0">Fanlar</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-tasks fa-2x me-3"></i>
+                            <div>
+                                <h3 class="mb-0">{{ assignments.count }}</h3>
+                                <p class="mb-0">Jami vazifalar</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check fa-2x me-3"></i>
+                            <div>
+                                <h3 class="mb-0">{{ submitted_assignments.count }}</h3>
+                                <p class="mb-0">Topshirilgan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Guruh ma'lumotlari kartasi qo'shing -->
+            {% if user_group %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Mening guruhim
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="card-title">{{ user_group.name }}</h6>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-book me-1"></i>Fan: {{ user_group.subject.name }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-user me-1"></i>O'qituvchi: {{ user_group.subject.teacher.get_full_name }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-user-graduate me-1"></i>
+                                Guruhda {{ user_group.students.count }} talaba
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Subjects -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>Fanlar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for subject in subjects %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ subject.name }}</h6>
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-user me-1"></i>{{ subject.teacher.get_full_name }}
+                                        </p>
+                                        {% with subject_assignments=assignments|dictsort:"subject.id" %}
+                                            {% for assignment in subject_assignments %}
+                                                {% if assignment.subject.id == subject.id %}
+                                                    <p class="text-muted small mb-0">
+                                                        <i class="fas fa-tasks me-1"></i>
+                                                        {% with subject_assignment_count=assignments|length %}
+                                                            {% if subject_assignment_count %}
+                                                                {{ subject_assignment_count }} vazifa
+                                                            {% else %}
+                                                                Vazifalar yo'q
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    </p>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endwith %}
+                                        <div class="mt-3">
+                                            <a href="{% url 'subject_detail' subject.id %}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-arrow-right me-1"></i>Kirish
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Hozircha fanlar yo'q</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

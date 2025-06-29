@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bosh Sahifa - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        Zamonaviy Ta'lim Tizimi
+                    </h1>
+                    <p class="hero-subtitle">
+                        O'qituvchilar va o'quvchilar uchun mo'ljallangan zamonaviy ta'lim platformasi. 
+                        Topshiriqlar, testlar, baholar va o'quv rejalarni boshqarish bir joyda.
+                    </p>
+                    <div class="hero-buttons">
+                        {% if user.is_authenticated %}
+                            {% if user.groups.all.0.name == 'Teachers' or user.is_superuser %}
+                                <a href="{% url 'teacher_dashboard' %}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-tachometer-alt me-2"></i>O'qituvchi Dashboard
+                                </a>
+                            {% else %}
+                                <a href="{% url 'student_dashboard' %}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-tachometer-alt me-2"></i>O'quvchi Dashboard
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'about' %}" class="btn btn-outline-light btn-lg ms-3">
+                                <i class="fas fa-info-circle me-2"></i>Batafsil
+                            </a>
+                        {% else %}
+                            <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Ro'yxatdan O'tish
+                            </a>
+                            <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg ms-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>Kirish
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image">
+                    <div class="floating-card card-1">
+                        <i class="fas fa-book"></i>
+                        <span>Fanlar</span>
+                    </div>
+                    <div class="floating-card card-2">
+                        <i class="fas fa-tasks"></i>
+                        <span>Topshiriqlar</span>
+                    </div>
+                    <div class="floating-card card-3">
+                        <i class="fas fa-star"></i>
+                        <span>Baholar</span>
+                    </div>
+                    <div class="floating-card card-4">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Testlar</span>
+                    </div>
+                    <div class="hero-illustration">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="section-title">Asosiy Imkoniyatlar</h2>
+                <p class="section-subtitle">Ta'lim jarayonini yanada samarali qilish uchun zamonaviy vositalar</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon bg-primary">
+                        <i class="fas fa-tasks text-white"></i>
+                    </div>
+                    <h5>Topshiriqlar Boshqaruvi</h5>
+                    <p>O'qituvchilar topshiriqlar yaratishi, o'quvchilar topshirishi va baholarni kuzatishi mumkin.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon bg-success">
+                        <i class="fas fa-question-circle text-white"></i>
+                    </div>
+                    <h5>Interaktiv Testlar</h5>
+                    <p>Vaqt chegarasi bilan testlar yaratish va avtomatik baholash tizimi.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon bg-warning">
+                        <i class="fas fa-star text-white"></i>
+                    </div>
+                    <h5>Baholar Tizimi</h5>
+                    <p>Shaffof baholash tizimi va o'quvchilar uchun batafsil hisobotlar.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon bg-info">
+                        <i class="fas fa-file-alt text-white"></i>
+                    </div>
+                    <h5>O'quv Rejalar</h5>
+                    <p>Fanlar bo'yicha o'quv rejalarni yuklash va boshqarish imkoniyati.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon bg-danger">
+                        <i class="fas fa-users text-white"></i>
+                    </div>
+                    <h5>Guruh Boshqaruvi</h5>
+                    <p>O'quvchilarni guruhlarga ajratish va guruhlar bo'yicha ishlash.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon bg-secondary">
+                        <i class="fas fa-chart-bar text-white"></i>
+                    </div>
+                    <h5>Statistika va Hisobotlar</h5>
+                    <p>O'quvchilar va o'qituvchilar uchun batafsil statistik ma'lumotlar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">O'quvchilar</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">O'qituvchilar</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">1000+</div>
+                    <div class="stat-label">Topshiriqlar</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">20+</div>
+                    <div class="stat-label">Fanlar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="cta-title">Bugun Boshlang!</h2>
+                <p class="cta-subtitle">
+                    Ta'lim jarayonini yanada samarali qilish uchun bizning platformamizga qo'shiling.
+                </p>
+                {% if not user.is_authenticated %}
+                <div class="cta-buttons">
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Ro'yxatdan O'tish
+                    </a>
+                    <a href="{% url 'about' %}" class="btn btn-outline-primary btn-lg ms-3">
+                        <i class="fas fa-info-circle me-2"></i>Batafsil Ma'lumot
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.05)" points="0,1000 1000,0 1000,1000"/></svg>');
+    background-size: cover;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+.hero-buttons {
+    margin-top: 2rem;
+}
+
+.hero-image {
+    position: relative;
+    height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-illustration {
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    color: white;
+    backdrop-filter: blur(10px);
+    animation: float 3s ease-in-out infinite;
+}
+
+.floating-card {
+    position: absolute;
+    background: white;
+    color: #4f46e5;
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    animation: float 3s ease-in-out infinite;
+}
+
+.floating-card i {
+    font-size: 1.5rem;
+}
+
+.card-1 {
+    top: 10%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.card-2 {
+    top: 20%;
+    right: 10%;
+    animation-delay: 0.5s;
+}
+
+.card-3 {
+    bottom: 30%;
+    left: 5%;
+    animation-delay: 1s;
+}
+
+.card-4 {
+    bottom: 10%;
+    right: 15%;
+    animation-delay: 1.5s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+.features-section {
+    background: #f8f9fa;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    height: 100%;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+}
+
+.feature-card h5 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.feature-card p {
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+.stats-section {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+}
+
+.stat-item {
+    padding: 2rem;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.cta-section {
+    background: white;
+}
+
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.cta-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.cta-buttons {
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .hero-buttons .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-buttons .btn:last-child {
+        margin-bottom: 0;
+    }
+    
+    .hero-image {
+        height: 300px;
+        margin-top: 2rem;
+    }
+    
+    .floating-card {
+        font-size: 0.9rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .floating-card i {
+        font-size: 1.25rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+    
+    .cta-title {
+        font-size: 2rem;
+    }
+    
+    .cta-buttons .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .cta-buttons .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ assignment.title }} - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>{{ assignment.title }}</h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-book me-1"></i>{{ assignment.subject.name }} - 
+                <i class="fas fa-users me-1"></i>{{ assignment.group.name }}
+            </p>
+        </div>
+        <a href="{% url 'subject_detail' assignment.subject.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Orqaga
+        </a>
+    </div>
+    
+    <!-- Assignment Details -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>Vazifa tafsilotlari
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="card-text">{{ assignment.description }}</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-calendar me-1"></i>
+                        <strong>Topshirish muddati:</strong> {{ assignment.due_date|date:"d.m.Y H:i" }}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-clock me-1"></i>
+                        <strong>Yaratilgan:</strong> {{ assignment.created_at|date:"d.m.Y H:i" }}
+                    </p>
+                </div>
+            </div>
+            {% if assignment.file %}
+                <div class="mt-3">
+                    <a href="{{ assignment.file.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                        <i class="fas fa-download me-1"></i>Vazifa faylini yuklab olish
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Submission Status -->
+    {% if submission %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Sizning topshiriqingiz
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p class="mb-2">
+                            <strong>Topshirilgan vaqt:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                        </p>
+                        {% if submission.comment %}
+                            <p class="mb-2">
+                                <strong>Sizning izohingiz:</strong> {{ submission.comment }}
+                            </p>
+                        {% endif %}
+                        <p class="mb-2">
+                            <a href="{{ submission.file.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                <i class="fas fa-download me-1"></i>Topshirilgan faylni ko'rish
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if submission.grade %}
+                            <div class="grade-badge badge bg-success fs-4">
+                                <i class="fas fa-star me-1"></i>{{ submission.grade }}
+                            </div>
+                            {% if submission.teacher_comment %}
+                                <p class="text-muted small mt-2">
+                                    <strong>O'qituvchi izohi:</strong><br>
+                                    {{ submission.teacher_comment }}
+                                </p>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-warning fs-6">
+                                <i class="fas fa-clock me-1"></i>Baholanmoqda
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Submit Assignment Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>Vazifani topshirish
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i>Vazifani topshirish
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

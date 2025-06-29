@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subject.name }} - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>{{ subject.name }}</h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-user me-1"></i>O'qituvchi: {{ subject.teacher.get_full_name }}
+            </p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Orqaga
+        </a>
+    </div>
+    
+    {% if subject.description %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6 class="card-title">Fan haqida</h6>
+                <p class="card-text">{{ subject.description }}</p>
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-tasks me-2"></i>Vazifalar
+            </h5>
+        </div>
+        <div class="card-body">
+            {% for assignment in assignments %}
+                <div class="assignment-card card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="card-title">{{ assignment.title }}</h6>
+                                <p class="card-text text-muted">{{ assignment.description|truncatewords:20 }}</p>
+                                <div class="d-flex align-items-center text-muted small">
+                                    <span class="me-3">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Muddat: {{ assignment.due_date|date:"d.m.Y H:i" }}
+                                    </span>
+                                    <span class="me-3">
+                                        <i class="fas fa-users me-1"></i>
+                                        {{ assignment.group.name }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                {% with submission=submissions|dictsort:"assignment.id" %}
+                                    {% for sub in submission %}
+                                        {% if sub.assignment.id == assignment.id %}
+                                            {% if sub.grade %}
+                                                <span class="grade-badge badge bg-success">
+                                                    <i class="fas fa-star me-1"></i>{{ sub.grade }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>Baholanmoqda
+                                                </span>
+                                            {% endif %}
+                                            <div class="mt-2">
+                                                <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>Ko'rish
+                                                </a>
+                                            </div>  
+                                        {% endif %}
+                                    {% empty %}
+                                        <span class="badge bg-danger mb-2">
+                                            <i class="fas fa-exclamation me-1"></i>Topshirilmagan
+                                        </span>
+                                        <div>
+                                            <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-upload me-1"></i>Topshirish
+                                            </a>
+                                        </div>
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-4">
+                    <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Bu fan uchun hozircha vazifalar yo'q</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ test.title }} - Test Ma'lumotlari{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Test Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>{{ test.title }}
+                        </h4>
+                        {% if is_teacher %}
+                            <div class="btn-group">
+                                <a href="{% url 'add_question' test.id %}" class="btn btn-light btn-sm">
+                                    <i class="fas fa-plus me-1"></i>Savol Qo'shish
+                                </a>
+                                <button class="btn btn-light btn-sm" onclick="toggleTestStatus()">
+                                    {% if test.is_active %}
+                                        <i class="fas fa-pause me-1"></i>To'xtatish
+                                    {% else %}
+                                        <i class="fas fa-play me-1"></i>Faollashtirish
+                                    {% endif %}
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Fan:</strong> {{ test.subject.name }}</p>
+                            <p><strong>Vaqt chegarasi:</strong> {{ test.time_limit }} daqiqa</p>
+                            <p><strong>Savollar soni:</strong> {{ questions.count }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Yaratuvchi:</strong> {{ test.created_by.get_full_name }}</p>
+                            <p><strong>Yaratilgan:</strong> {{ test.created_at|date:"d.m.Y H:i" }}</p>
+                            <p><strong>Holat:</strong> 
+                                {% if test.is_active %}
+                                    <span class="badge bg-success">Faol</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Nofaol</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if test.description %}
+                        <div class="mt-3">
+                            <h6>Tavsif:</h6>
+                            <p class="text-muted">{{ test.description }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Questions List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Savollar ({{ questions.count }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        {% for question in questions %}
+                            <div class="question-item mb-4 p-3 border rounded">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="question-number">{{ forloop.counter }}. Savol</h6>
+                                    {% if is_teacher %}
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editQuestion({{ question.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteQuestion({{ question.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="question-text mb-3">
+                                    <strong>{{ question.question_text }}</strong>
+                                </div>
+                                
+                                <div class="options">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="option-item mb-2">
+                                                <span class="option-label {% if question.correct_answer == 'A' %}correct-answer{% endif %}">A)</span>
+                                                {{ question.option_a }}
+                                                {% if question.correct_answer == 'A' and is_teacher %}
+                                                    <i class="fas fa-check text-success ms-2"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="option-item mb-2">
+                                                <span class="option-label {% if question.correct_answer == 'B' %}correct-answer{% endif %}">B)</span>
+                                                {{ question.option_b }}
+                                                {% if question.correct_answer == 'B' and is_teacher %}
+                                                    <i class="fas fa-check text-success ms-2"></i>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="option-item mb-2">
+                                                <span class="option-label {% if question.correct_answer == 'C' %}correct-answer{% endif %}">C)</span>
+                                                {{ question.option_c }}
+                                                {% if question.correct_answer == 'C' and is_teacher %}
+                                                    <i class="fas fa-check text-success ms-2"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="option-item mb-2">
+                                                <span class="option-label {% if question.correct_answer == 'D' %}correct-answer{% endif %}">D)</span>
+                                                {{ question.option_d }}
+                                                {% if question.correct_answer == 'D' and is_teacher %}
+                                                    <i class="fas fa-check text-success ms-2"></i>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Hozircha savollar yo'q</h5>
+                            {% if is_teacher %}
+                                <p class="text-muted">Testga savollar qo'shish uchun yuqoridagi tugmani bosing</p>
+                                <a href="{% url 'add_question' test.id %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Birinchi Savolni Qo'shish
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Test Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Amallar
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if not is_teacher %}
+                        {% if user_result %}
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-check-circle me-2"></i>Test Yakunlangan</h6>
+                                <p class="mb-1"><strong>Natija:</strong> {{ user_result.get_percentage }}%</p>
+                                <p class="mb-1"><strong>To'g'ri javoblar:</strong> {{ user_result.correct_answers }}/{{ user_result.total_questions }}</p>
+                                <p class="mb-0"><strong>Baho:</strong> {{ user_result.get_grade }}</p>
+                            </div>
+                        {% else %}
+                            {% if test.is_active and questions %}
+                                <a href="{% url 'take_test' test.id %}" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-play me-2"></i>Testni Boshlash
+                                </a>
+                                <small class="text-muted d-block mt-2 text-center">
+                                    Vaqt chegarasi: {{ test.time_limit }} daqiqa
+                                </small>
+                            {% elif not test.is_active %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-pause-circle me-2"></i>Test hozirda nofaol
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Test hozircha savolsiz
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'add_question' test.id %}" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-plus me-2"></i>Savol Qo'shish
+                        </a>
+                        <button class="btn btn-outline-secondary w-100 mb-2" onclick="viewResults()">
+                            <i class="fas fa-chart-bar me-2"></i>Natijalarni Ko'rish
+                        </button>
+                        <button class="btn btn-outline-info w-100" onclick="exportTest()">
+                            <i class="fas fa-download me-2"></i>Testni Eksport
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Test Statistics -->
+            {% if is_teacher %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>Statistika
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-item mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Jami savollar:</span>
+                                <strong>{{ questions.count }}</strong>
+                            </div>
+                        </div>
+                        <div class="stat-item mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Test topshirganlar:</span>
+                                <strong>{{ test.testresult_set.count }}</strong>
+                            </div>
+                        </div>
+                        <div class="stat-item mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>O'rtacha ball:</span>
+                                <strong>
+                                    {% if test.testresult_set.count > 0 %}
+                                        {{ test.testresult_set.all|length|floatformat:1 }}%
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.question-item {
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.question-item:hover {
+    background: #e9ecef;
+}
+
+.question-number {
+    color: #495057;
+    font-weight: 600;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #2c3e50;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.option-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    background: #6c757d;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.option-label.correct-answer {
+    background: #28a745;
+}
+
+.stat-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+</style>
+
+<script>
+function toggleTestStatus() {
+    if (confirm('Test holatini o\'zgartirishni xohlaysizmi?')) {
+        // AJAX request to toggle test status
+        fetch(`/tests/{{ test.id }}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Xatolik yuz berdi!');
+            }
+        });
+    }
+}
+
+function editQuestion(questionId) {
+    // Redirect to edit question page
+    window.location.href = `/tests/questions/${questionId}/edit/`;
+}
+
+function deleteQuestion(questionId) {
+    if (confirm('Bu savolni o\'chirishni xohlaysizmi?')) {
+        fetch(`/tests/questions/${questionId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Xatolik yuz berdi!');
+            }
+        });
+    }
+}
+
+function viewResults() {
+    window.location.href = `/tests/{{ test.id }}/results/`;
+}
+
+function exportTest() {
+    window.location.href = `/tests/{{ test.id }}/export/`;
+}
+</script>
+{% endblock %}

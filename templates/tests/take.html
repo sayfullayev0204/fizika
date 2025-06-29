@@ -1,0 +1,582 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ test.title }} - Test Topshirish{% endblock %}
+
+{% block content %}
+<div class="test-container">
+    <!-- Test Header -->
+    <div class="test-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h3 class="test-title">{{ test.title }}</h3>
+                    <p class="test-subject">{{ test.subject.name }}</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="timer-display">
+                        <i class="fas fa-clock me-2"></i>
+                        <span id="timer">{{ test.time_limit }}:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8">
+                <form id="testForm" method="post">
+                    {% csrf_token %}
+                    
+                    <div class="test-questions">
+                        {% for question in questions %}
+                        <div class="question-card" data-question="{{ forloop.counter }}">
+                            <div class="question-header">
+                                <span class="question-number">{{ forloop.counter }}</span>
+                                <div class="question-text">{{ question.question_text }}</div>
+                            </div>
+                            
+                            <div class="question-options">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="option-item">
+                                            <input type="radio" 
+                                                   id="q{{ question.id }}_a" 
+                                                   name="question_{{ question.id }}" 
+                                                   value="A"
+                                                   required>
+                                            <label for="q{{ question.id }}_a" class="option-label">
+                                                <span class="option-letter">A</span>
+                                                <span class="option-text">{{ question.option_a }}</span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="option-item">
+                                            <input type="radio" 
+                                                   id="q{{ question.id }}_b" 
+                                                   name="question_{{ question.id }}" 
+                                                   value="B"
+                                                   required>
+                                            <label for="q{{ question.id }}_b" class="option-label">
+                                                <span class="option-letter">B</span>
+                                                <span class="option-text">{{ question.option_b }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="option-item">
+                                            <input type="radio" 
+                                                   id="q{{ question.id }}_c" 
+                                                   name="question_{{ question.id }}" 
+                                                   value="C"
+                                                   required>
+                                            <label for="q{{ question.id }}_c" class="option-label">
+                                                <span class="option-letter">C</span>
+                                                <span class="option-text">{{ question.option_c }}</span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="option-item">
+                                            <input type="radio" 
+                                                   id="q{{ question.id }}_d" 
+                                                   name="question_{{ question.id }}" 
+                                                   value="D"
+                                                   required>
+                                            <label for="q{{ question.id }}_d" class="option-label">
+                                                <span class="option-letter">D</span>
+                                                <span class="option-text">{{ question.option_d }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                            <h5>Bu testda hozircha savollar yo'q</h5>
+                            <p>O'qituvchi tomonidan savollar qo'shilishini kuting</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if questions %}
+                    <div class="test-actions">
+                        <button type="button" class="btn btn-warning" onclick="saveProgress()">
+                            <i class="fas fa-save me-2"></i>Jarayonni Saqlash
+                        </button>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check me-2"></i>Testni Yakunlash
+                        </button>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+            
+            <!-- Sidebar -->
+            {% if questions %}
+            <div class="col-lg-4">
+                <div class="card sticky-top">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Savollar Navigatsiyasi
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="questions-grid">
+                            {% for question in questions %}
+                            <button type="button" 
+                                    class="question-nav-btn" 
+                                    data-question="{{ forloop.counter }}"
+                                    onclick="scrollToQuestion({{ forloop.counter }})">
+                                {{ forloop.counter }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="progress-info mt-4">
+                            <div class="progress-item">
+                                <span class="progress-label">Javob berilgan:</span>
+                                <span class="progress-value" id="answeredCount">0</span>
+                            </div>
+                            <div class="progress-item">
+                                <span class="progress-label">Qolgan:</span>
+                                <span class="progress-value" id="remainingCount">{{ questions.count }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress mt-3">
+                            <div class="progress-bar bg-success" 
+                                 id="progressBar" 
+                                 style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warning Card -->
+                <div class="card mt-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Muhim Eslatma
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="warning-list">
+                            <li>Vaqt tugagach test avtomatik yakunlanadi</li>
+                            <li>Sahifani yangilamang yoki yopmang</li>
+                            <li>Barcha savollarga javob berishga harakat qiling</li>
+                            <li>Jarayonni vaqti-vaqti bilan saqlang</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.test-container {
+    min-height: 100vh;
+    background: #f8f9fa;
+}
+
+.test-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+    padding: 1.5rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.test-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.test-subject {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.timer-display {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+}
+
+.question-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.question-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.question-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.question-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.question-text {
+    flex: 1;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+.question-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.option-item {
+    position: relative;
+}
+
+.option-item input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.option-label {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 0;
+}
+
+.option-label:hover {
+    background: #e9ecef;
+    border-color: #4f46e5;
+}
+
+.option-item input[type="radio"]:checked + .option-label {
+    background: rgba(79, 70, 229, 0.1);
+    border-color: #4f46e5;
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+.option-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #6c757d;
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.option-item input[type="radio"]:checked + .option-label .option-letter {
+    background: #4f46e5;
+}
+
+.option-text {
+    flex: 1;
+    line-height: 1.5;
+}
+
+.test-actions {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.questions-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+}
+
+.question-nav-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.question-nav-btn:hover {
+    border-color: #4f46e5;
+    color: #4f46e5;
+}
+
+.question-nav-btn.answered {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+.question-nav-btn.current {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
+}
+
+.progress-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.progress-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.progress-value {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.warning-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.warning-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f8f9fa;
+    font-size: 0.9rem;
+}
+
+.warning-list li:last-child {
+    border-bottom: none;
+}
+
+.warning-list li::before {
+    content: '⚠️';
+    margin-right: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .test-header .col-md-6:last-child {
+        text-align: left !important;
+        margin-top: 1rem;
+    }
+    
+    .question-card {
+        padding: 1.5rem;
+    }
+    
+    .questions-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+</style>
+
+<script>
+let timeLimit = {{ test.time_limit }} * 60; // Convert to seconds
+let timeRemaining = timeLimit;
+let timerInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const questionsExist = {{ questions.count }} > 0;
+    
+    if (questionsExist) {
+        startTimer();
+        updateProgress();
+        
+        // Add event listeners to all radio buttons
+        const radioButtons = document.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                updateProgress();
+                updateNavigationButtons();
+            });
+        });
+        
+        // Auto-save every 30 seconds
+        setInterval(saveProgress, 30000);
+        
+        // Prevent accidental page refresh
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    }
+});
+
+function startTimer() {
+    timerInterval = setInterval(function() {
+        timeRemaining--;
+        
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        
+        document.getElementById('timer').textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Change color when time is running out
+        const timerElement = document.getElementById('timer');
+        if (timeRemaining <= 300) { // 5 minutes
+            timerElement.style.color = '#ef4444';
+        } else if (timeRemaining <= 600) { // 10 minutes
+            timerElement.style.color = '#f59e0b';
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            submitTest();
+        }
+    }, 1000);
+}
+
+function updateProgress() {
+    const totalQuestions = {{ questions.count }};
+    const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
+    const remainingQuestions = totalQuestions - answeredQuestions;
+    const progressPercentage = (answeredQuestions / totalQuestions) * 100;
+    
+    document.getElementById('answeredCount').textContent = answeredQuestions;
+    document.getElementById('remainingCount').textContent = remainingQuestions;
+    document.getElementById('progressBar').style.width = progressPercentage + '%';
+}
+
+function updateNavigationButtons() {
+    const questions = document.querySelectorAll('.question-card');
+    questions.forEach((question, index) => {
+        const questionNumber = index + 1;
+        const navBtn = document.querySelector(`[data-question="${questionNumber}"]`);
+        const hasAnswer = question.querySelector('input[type="radio"]:checked');
+        
+        if (hasAnswer) {
+            navBtn.classList.add('answered');
+        } else {
+            navBtn.classList.remove('answered');
+        }
+    });
+}
+
+function scrollToQuestion(questionNumber) {
+    const questionCard = document.querySelector(`[data-question="${questionNumber}"]`);
+    questionCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Update current question indicator
+    document.querySelectorAll('.question-nav-btn').forEach(btn => {
+        btn.classList.remove('current');
+    });
+    document.querySelector(`[data-question="${questionNumber}"]`).classList.add('current');
+}
+
+function saveProgress() {
+    const formData = new FormData(document.getElementById('testForm'));
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Save-Progress': 'true'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Jarayon saqlandi', 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving progress:', error);
+    });
+}
+
+function submitTest() {
+    clearInterval(timerInterval);
+    
+    if (confirm('Testni yakunlashga ishonchingiz komilmi?')) {
+        document.getElementById('testForm').submit();
+    }
+}
+
+// Form submission handler
+const testForm = document.getElementById('testForm');
+if (testForm) {
+    testForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
+        const totalQuestions = {{ questions.count }};
+        
+        if (answeredQuestions < totalQuestions) {
+            const unanswered = totalQuestions - answeredQuestions;
+            if (!confirm(`${unanswered} ta savolga javob berilmagan. Baribir yakunlashni xohlaysizmi?`)) {
+                return;
+            }
+        }
+        
+        clearInterval(timerInterval);
+        this.submit();
+    });
+}
+
+function showNotification(message, type) {
+    // Simple notification implementation
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

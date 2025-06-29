@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+
+{% block title %}O'qituvchi Dashboard - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-chalkboard-teacher me-3"></i>
+                    O'qituvchi Dashboard
+                </h1>
+                <p class="dashboard-subtitle">{{ user.first_name|default:user.username }}, bugun {{ recent_assignments|length }} ta topshiriq mavjud</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'create_assignment' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>Yangi Topshiriq
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-book text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ subjects.count }}</h3>
+                    <p>Fanlar</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ recent_assignments.count }}</h3>
+                    <p>Topshiriqlar</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-users text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="students-count">0</h3>
+                    <p>O'quvchilar</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-clipboard-check text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="submissions-count">0</h3>
+                    <p>Topshirilgan</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Subjects Management -->
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>Mening Fanlarim
+                    </h5>
+                    <a href="{% url 'create_subject' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>Fan qo'shish
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if subjects %}
+                        <div class="subjects-grid">
+                            {% for subject in subjects %}
+                            <div class="subject-card-teacher">
+                                <div class="subject-header">
+                                    <div class="subject-icon">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <div class="subject-info">
+                                        <h6>{{ subject.name }}</h6>
+                                        <small class="text-muted">{{ subject.studentgroup_set.count }} guruh</small>
+                                    </div>
+                                    <div class="subject-actions">
+                                        <a href="{% url 'assignment_list' subject.id %}" class="btn btn-sm btn-primary">
+                                            Ko'rish
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="subject-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-number">{{ subject.assignment_set.count }}</span>
+                                        <span class="stat-label">Topshiriq</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-number">{{ subject.studentgroup_set.all.0.students.count|default:0 }}</span>
+                                        <span class="stat-label">O'quvchi</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                            <h6>Fanlar yo'q</h6>
+                            <p>Hozircha birorta fan yaratilmagan</p>
+                            <a href="{% url 'create_subject' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Birinchi fanni yarating
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>So'nggi Faollik
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        <div class="activity-item">
+                            <div class="activity-icon bg-success">
+                                <i class="fas fa-plus text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>Yangi topshiriq</strong> yaratildi</p>
+                                <small class="text-muted">2 soat oldin</small>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon bg-primary">
+                                <i class="fas fa-upload text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>3 ta javob</strong> topshirildi</p>
+                                <small class="text-muted">4 soat oldin</small>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon bg-warning">
+                                <i class="fas fa-star text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>Baholar</strong> qo'yildi</p>
+                                <small class="text-muted">1 kun oldin</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Assignments -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>So'nggi Topshiriqlar
+                    </h5>
+                    <a href="{% url 'create_assignment' %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus me-1"></i>Yangi topshiriq
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_assignments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Topshiriq</th>
+                                        <th>Fan</th>
+                                        <th>Muddat</th>
+                                        <th>Holat</th>
+                                        <th>Topshirilgan</th>
+                                        <th>Amallar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for assignment in recent_assignments %}
+                                    <tr>
+                                        <td>
+                                            <div class="assignment-title">
+                                                <strong>{{ assignment.title }}</strong>
+                                                <small class="d-block text-muted">{{ assignment.description|truncatechars:50 }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ assignment.subject.name }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="countdown-timer" data-deadline="{{ assignment.deadline|date:'c' }}"></div>
+                                        </td>
+                                        <td>
+                                            {% if assignment.is_expired %}
+                                                <span class="badge bg-danger">Tugagan</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Faol</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="submission-count">{{ assignment.submission_set.count }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="editAssignment({{ assignment.id }})">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <h6>Topshiriqlar yo'q</h6>
+                            <p>Hozircha birorta topshiriq yaratilmagan</p>
+                            <a href="{% url 'create_assignment' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Birinchi topshiriqni yarating
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.stat-content p {
+    color: #6c757d;
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.subject-card-teacher {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.subject-card-teacher:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.subject-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.subject-header .subject-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+}
+
+.subject-header .subject-info {
+    flex: 1;
+}
+
+.subject-header .subject-info h6 {
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.subject-stats {
+    display: flex;
+    gap: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.activity-timeline {
+    position: relative;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.activity-content p {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.table th {
+    border-top: none;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+    color: #2c3e50;
+    padding: 1rem 0.75rem;
+}
+
+.table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-top: 1px solid #f8f9fa;
+}
+
+.assignment-title strong {
+    color: #2c3e50;
+}
+
+.submission-count {
+    font-weight: 600;
+    color: #495057;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header .col-md-4 {
+        text-align: left !important;
+        margin-top: 1rem;
+    }
+    
+    .subject-stats {
+        justify-content: space-around;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+function editAssignment(id) {
+    showNotification('Topshiriqni tahrirlash funksiyasi tez orada qo\'shiladi!', 'info');
+}
+</script>
+{% endblock %}

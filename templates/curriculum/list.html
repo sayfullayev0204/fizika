@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}O'quv Rejalar - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-file-alt me-3 text-primary"></i>O'quv Rejalar
+            </h1>
+            <p class="text-muted mb-0">Fanlar bo'yicha o'quv rejalar ro'yxati</p>
+        </div>
+        {% if user.groups.all.0.name == 'Teachers' %}
+        <a href="{% url 'create_curriculum' %}" class="btn btn-primary-modern">
+            <i class="fas fa-plus me-2"></i>Yangi o'quv reja
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card-modern mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="subject" class="form-label">Fan bo'yicha filter</label>
+                    <select name="subject" id="subject" class="form-select">
+                        <option value="">Barcha fanlar</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if selected_subject == subject.id %}selected{% endif %}>
+                            {{ subject.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Curriculum List -->
+    <div class="row g-4">
+        {% for curriculum in curriculums %}
+        <div class="col-lg-6">
+            <div class="card-modern h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ curriculum.title }}</h5>
+                        {% if curriculum.subject %}
+                        <span class="badge bg-primary">{{ curriculum.subject.name }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if curriculum.description %}
+                    <p class="card-text text-muted">{{ curriculum.description|truncatechars:100 }}</p>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ curriculum.created_by.first_name|default:curriculum.created_by.username }}
+                            <br>
+                            <i class="fas fa-calendar me-1"></i>{{ curriculum.created_at|date:"d.m.Y" }}
+                        </small>
+                        <a href="{{ curriculum.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-download me-1"></i>Yuklab olish
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-file-alt"></i>
+                <h4>O'quv rejalar topilmadi</h4>
+                <p>Hozircha o'quv rejalar mavjud emas</p>
+                {% if user.groups.all.0.name == 'Teachers' %}
+                <a href="{% url 'create_curriculum' %}" class="btn btn-primary-modern">
+                    <i class="fas fa-plus me-2"></i>Birinchi o'quv rejani yarating
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

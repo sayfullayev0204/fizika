@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Ro'yxatdan o'tish - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold text-primary mb-2">Ro'yxatdan o'tish</h2>
+                            <p class="text-muted">Yangi hisob yarating</p>
+                        </div>
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- User Type Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Foydalanuvchi turi</label>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <input type="radio" class="btn-check" name="user_type" id="student" value="student" checked>
+                                        <label class="btn btn-outline-primary w-100 py-2" for="student">
+                                            <i class="fas fa-user-graduate d-block mb-1"></i>
+                                            <small>O'quvchi</small>
+                                        </label>
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="radio" class="btn-check" name="user_type" id="teacher" value="teacher">
+                                        <label class="btn btn-outline-success w-100 py-2" for="teacher">
+                                            <i class="fas fa-chalkboard-teacher d-block mb-1"></i>
+                                            <small>O'qituvchi</small>
+                                        </label>
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="radio" class="btn-check" name="user_type" id="admin" value="admin">
+                                        <label class="btn btn-outline-danger w-100 py-2" for="admin">
+                                            <i class="fas fa-user-shield d-block mb-1"></i>
+                                            <small>Admin</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Group Selection (only for students) -->
+                            <div class="mb-3" id="groupSelection" style="display: block;">
+                                <label for="{{ form.student_group.id_for_label }}" class="form-label">
+                                    <i class="fas fa-users me-2"></i>{{ form.student_group.label }}
+                                </label>
+                                {{ form.student_group }}
+                                <small class="form-text text-muted">O'qish uchun guruhni tanlang</small>
+                                {% if form.student_group.errors %}
+                                    <div class="text-danger small">{{ form.student_group.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Form Fields -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger small">{{ form.username.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">{{ form.password1.label }}</label>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">{{ form.password2.label }}</label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i>Ro'yxatdan o'tish
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <p class="text-muted mb-0">
+                                Hisobingiz bormi? 
+                                <a href="{% url 'login' %}" class="text-primary text-decoration-none fw-semibold">Kirish</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-check:checked + .btn-outline-primary {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+.btn-check:checked + .btn-outline-success {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+    color: white;
+}
+.btn-check:checked + .btn-outline-danger {
+    background-color: var(--bs-danger);
+    border-color: var(--bs-danger);
+    color: white;
+}
+
+#groupSelection {
+    transition: all 0.3s ease;
+}
+
+.form-select {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.form-select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide group selection based on user type
+    const userTypeInputs = document.querySelectorAll('input[name="user_type"]');
+    const groupSelection = document.getElementById('groupSelection');
+    const studentGroupSelect = document.getElementById('id_student_group');
+
+    function toggleGroupSelection() {
+        const selectedUserType = document.querySelector('input[name="user_type"]:checked').value;
+        
+        if (selectedUserType === 'student') {
+            groupSelection.style.display = 'block';
+            studentGroupSelect.required = true;
+        } else {
+            groupSelection.style.display = 'none';
+            studentGroupSelect.required = false;
+            studentGroupSelect.value = '';
+        }
+    }
+
+    userTypeInputs.forEach(input => {
+        input.addEventListener('change', toggleGroupSelection);
+    });
+
+    // Initial check
+    toggleGroupSelection();
+    
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(e) {
+        const selectedUserType = document.querySelector('input[name="user_type"]:checked').value;
+        
+        // Check if student selected but no group chosen
+        if (selectedUserType === 'student' && !studentGroupSelect.value) {
+            e.preventDefault();
+            alert('O\'quvchilar uchun guruh tanlash majburiy!');
+            studentGroupSelect.focus();
+            return;
+        }
+        
+        // Check if passwords match
+        const password1 = document.getElementById('id_password1').value;
+        const password2 = document.getElementById('id_password2').value;
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Parollar mos kelmaydi!');
+            return;
+        }
+        
+        if (password1.length < 8) {
+            e.preventDefault();
+            alert('Parol kamida 8 ta belgidan iborat bo\'lishi kerak!');
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

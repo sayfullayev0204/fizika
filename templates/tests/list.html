@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Testlar - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-question-circle me-3 text-primary"></i>Testlar
+            </h1>
+            <p class="text-muted mb-0">Fanlar bo'yicha testlar ro'yxati</p>
+        </div>
+        {% if user.groups.all.0.name == 'Teachers' or user.is_superuser %}
+        <a href="{% url 'create_test' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Yangi test
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="subject" class="form-label">Fan bo'yicha filter</label>
+                    <select name="subject" id="subject" class="form-select">
+                        <option value="">Barcha fanlar</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if selected_subject == subject.id %}selected{% endif %}>
+                            {{ subject.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tests List -->
+    <div class="row g-4">
+        {% for test in tests %}
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ test.title }}</h5>
+                        <span class="badge bg-primary">{{ test.subject.name }}</span>
+                    </div>
+                    
+                    {% if test.description %}
+                    <p class="card-text text-muted">{{ test.description|truncatechars:100 }}</p>
+                    {% endif %}
+                    
+                    <div class="test-info mb-3">
+                        <div class="info-item">
+                            <i class="fas fa-question text-primary me-2"></i>
+                            <span>{{ test.question_set.count }} ta savol</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            <span>{{ test.time_limit }} daqiqa</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-user text-info me-2"></i>
+                            <span>{{ test.created_by.first_name|default:test.created_by.username }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>{{ test.created_at|date:"d.m.Y" }}
+                        </small>
+                        <div class="btn-group">
+                            <a href="{% url 'test_detail' test.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Ko'rish
+                            </a>
+                            {% if user.groups.all.0.name != 'Teachers' and not user.is_superuser %}
+                            <a href="{% url 'take_test' test.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-play me-1"></i>Boshlash
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                <h4>Testlar topilmadi</h4>
+                <p>Hozircha testlar mavjud emas</p>
+                {% if user.groups.all.0.name == 'Teachers' or user.is_superuser %}
+                <a href="{% url 'create_test' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Birinchi testni yarating
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.test-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+</style>
+{% endblock %}

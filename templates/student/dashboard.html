@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+
+{% block title %}O'quvchi Dashboard - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-tachometer-alt me-3"></i>
+                    Xush kelibsiz, {{ user.first_name|default:user.username }}!
+                </h1>
+                <p class="dashboard-subtitle">Bugun {{ recent_assignments|length }} ta yangi topshiriq mavjud</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="dashboard-date">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    <span id="current-date"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-book text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ subjects.count }}</h3>
+                    <p>Fanlar</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ recent_assignments.count }}</h3>
+                    <p>Topshiriqlar</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-clock text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="pending-count">0</h3>
+                    <p>Kutilayotgan</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-star text-white"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>4.5</h3>
+                    <p>O'rtacha baho</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Subjects Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>Mening Fanlarim
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if subjects %}
+                        <div class="subjects-grid">
+                            {% for subject in subjects %}
+                            <div class="subject-card" onclick="location.href='{% url 'assignment_list' subject.id %}'">
+                                <div class="subject-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <div class="subject-info">
+                                    <h6>{{ subject.name }}</h6>
+                                    <small class="text-muted">{{ subject.teacher.first_name|default:subject.teacher.username }}</small>
+                                </div>
+                                <div class="subject-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                            <h6>Hozircha fanlar yo'q</h6>
+                            <p>Siz hali birorta fanga a'zo emassiz</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Assignments -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>So'nggi Topshiriqlar
+                    </h5>
+                    <a href="{% url 'student_grades' %}" class="btn btn-sm btn-outline-primary">
+                        Barchasini ko'rish
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_assignments %}
+                        <div class="assignments-list">
+                            {% for assignment in recent_assignments %}
+                            <div class="assignment-item {% if assignment.is_expired %}expired{% else %}active{% endif %}">
+                                <div class="assignment-info">
+                                    <h6>{{ assignment.title }}</h6>
+                                    <small class="text-muted">{{ assignment.subject.name }}</small>
+                                </div>
+                                <div class="assignment-meta">
+                                    <div class="countdown-timer" data-deadline="{{ assignment.deadline|date:'c' }}"></div>
+                                    <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-sm btn-primary">
+                                        Ko'rish
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <h6>Topshiriqlar yo'q</h6>
+                            <p>Hozircha yangi topshiriqlar mavjud emas</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Tezkor Amallar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <a href="{% url 'student_grades' %}" class="quick-action-item">
+                            <div class="quick-action-icon bg-primary">
+                                <i class="fas fa-star text-white"></i>
+                            </div>
+                            <span>Baholarim</span>
+                        </a>
+                        
+                        <a href="{% url 'curriculum_list' %}" class="quick-action-item">
+                            <div class="quick-action-icon bg-success">
+                                <i class="fas fa-file-alt text-white"></i>
+                            </div>
+                            <span>O'quv rejalar</span>
+                        </a>
+                        
+                        <a href="{% url 'test_list' %}" class="quick-action-item">
+                            <div class="quick-action-icon bg-warning">
+                                <i class="fas fa-question-circle text-white"></i>
+                            </div>
+                            <span>Testlar</span>
+                        </a>
+                        
+                        <div class="quick-action-item" onclick="showProfile()">
+                            <div class="quick-action-icon bg-info">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            <span>Profil</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.dashboard-date {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.stat-content p {
+    color: #6c757d;
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.subjects-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.subject-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.subject-card:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.subject-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+}
+
+.subject-info {
+    flex: 1;
+}
+
+.subject-info h6 {
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.subject-arrow {
+    color: #6c757d;
+}
+
+.assignments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.assignment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #28a745;
+}
+
+.assignment-item.expired {
+    border-left-color: #dc3545;
+    opacity: 0.7;
+}
+
+.assignment-info {
+    flex: 1;
+}
+
+.assignment-info h6 {
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.assignment-meta {
+    text-align: right;
+}
+
+.assignment-meta .countdown-timer {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.quick-action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.quick-action-item:hover {
+    background: #e9ecef;
+    transform: translateY(-3px);
+    color: inherit;
+    text-decoration: none;
+}
+
+.quick-action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .assignment-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .assignment-meta {
+        text-align: left;
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current date
+    const currentDate = new Date().toLocaleDateString('uz-UZ', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    document.getElementById('current-date').textContent = currentDate;
+    
+    // Count pending assignments
+    const pendingAssignments = document.querySelectorAll('.assignment-item.active').length;
+    document.getElementById('pending-count').textContent = pendingAssignments;
+});
+
+function showProfile() {
+    showNotification('Profil funksiyasi tez orada qo\'shiladi!', 'info');
+}
+</script>
+{% endblock %}

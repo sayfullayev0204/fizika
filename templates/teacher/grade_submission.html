@@ -1,0 +1,745 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Baholash - {{ submission.assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Submission Details -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-1">{{ submission.assignment.title }}</h4>
+                            <div class="submission-meta">
+                                <span class="badge bg-primary me-2">{{ submission.assignment.subject.name }}</span>
+                                <span class="text-muted">
+                                    <i class="fas fa-user me-1"></i>{{ submission.student.first_name|default:submission.student.username }}
+                                </span>
+                                <span class="badge bg-info ms-2">
+                                    Maksimal: {{ submission.assignment.max_score }} ball
+                                </span>
+                            </div>
+                        </div>
+                        <div class="submission-status">
+                            {% if submission.grade %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check me-1"></i>Baholangan
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-clock me-1"></i>Baholanmagan
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Assignment Description -->
+                    <div class="assignment-description mb-4">
+                        <h6><i class="fas fa-align-left me-2"></i>Topshiriq Tavsifi</h6>
+                        <div class="description-content">
+                            {{ submission.assignment.description|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    <!-- Student Submission -->
+                    <div class="student-submission">
+                        <h6><i class="fas fa-upload me-2"></i>O'quvchi Topshirig'i</h6>
+                        
+                        {% if submission.file %}
+                        <div class="submission-file mb-3">
+                            <div class="file-preview">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="file-info">
+                                    <h6>{{ submission.file.name|cut:"submissions/" }}</h6>
+                                    <small class="text-muted">
+                                        Topshirilgan: {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                                    </small>
+                                </div>
+                                <div class="file-actions">
+                                    <a href="{{ submission.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Ko'rish
+                                    </a>
+                                    <a href="{{ submission.file.url }}" download class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-download me-1"></i>Yuklab olish
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if submission.comment %}
+                        <div class="submission-comment">
+                            <h6>O'quvchi izohi:</h6>
+                            <div class="comment-content">
+                                {{ submission.comment|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grading Form -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>
+                        {% if submission.grade %}Ball O'zgartirish{% else %}Ball Qo'yish{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if submission.grade %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Bu topshiriq {{ submission.grade.graded_at|date:"d.m.Y H:i" }} da {{ submission.grade.score }}/{{ submission.assignment.max_score }} ball bilan baholangan.
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="grading-form needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label for="{{ form.score.id_for_label }}" class="form-label">
+                                        <i class="fas fa-star me-2"></i>Ball (0-{{ submission.assignment.max_score }})
+                                    </label>
+                                    <div class="score-input-group">
+                                        <div class="input-group">
+                                            {{ form.score }}
+                                            <span class="input-group-text">/{{ submission.assignment.max_score }}</span>
+                                        </div>
+                                        <div class="score-slider mt-2">
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="scoreSlider" 
+                                                   min="0" 
+                                                   max="{{ submission.assignment.max_score }}" 
+                                                   value="{% if grade %}{{ grade.score }}{% else %}0{% endif %}"
+                                                   oninput="updateScoreFromSlider(this.value)">
+                                        </div>
+                                    </div>
+                                    <div class="score-preview mt-3" id="scorePreview">
+                                        <div class="score-badge" id="scoreBadge">
+                                            <span class="score-number">{% if grade %}{{ grade.score }}{% else %}0{% endif %}</span>
+                                            <span class="score-max">/{{ submission.assignment.max_score }}</span>
+                                        </div>
+                                        <div class="score-text" id="scoreText">
+                                            {% if grade %}{{ grade.get_grade_level }} ({{ grade.get_percentage }}%){% else %}Ball tanlanmagan{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-chart-bar me-2"></i>Ball Taqsimoti
+                                    </label>
+                                    <div class="score-distribution">
+                                        <div class="score-item">
+                                            <span class="score-label">A'lo (90-100%)</span>
+                                            <div class="score-bar">
+                                                <div class="score-fill excellent" style="width: 40%"></div>
+                                            </div>
+                                            <span class="score-count">8</span>
+                                        </div>
+                                        <div class="score-item">
+                                            <span class="score-label">Yaxshi (70-89%)</span>
+                                            <div class="score-bar">
+                                                <div class="score-fill good" style="width: 35%"></div>
+                                            </div>
+                                            <span class="score-count">7</span>
+                                        </div>
+                                        <div class="score-item">
+                                            <span class="score-label">Qoniqarli (50-69%)</span>
+                                            <div class="score-bar">
+                                                <div class="score-fill satisfactory" style="width: 20%"></div>
+                                            </div>
+                                            <span class="score-count">4</span>
+                                        </div>
+                                        <div class="score-item">
+                                            <span class="score-label">Qoniqarsiz (0-49%)</span>
+                                            <div class="score-bar">
+                                                <div class="score-fill poor" style="width: 5%"></div>
+                                            </div>
+                                            <span class="score-count">1</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.comment.id_for_label }}" class="form-label">
+                                <i class="fas fa-comment me-2"></i>{{ form.comment.label }}
+                            </label>
+                            {{ form.comment }}
+                            <small class="form-text text-muted">
+                                O'quvchiga fikr-mulohaza va tavsiyalar yozing
+                            </small>
+                        </div>
+                        
+                        <!-- Quick Score Buttons -->
+                        <div class="quick-scores mb-4">
+                            <label class="form-label">Tezkor Ball Qo'yish</label>
+                            <div class="quick-score-buttons">
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="setQuickScore({{ submission.assignment.max_score }})">
+                                    <i class="fas fa-trophy me-1"></i>Maksimal ({{ submission.assignment.max_score }})
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="setQuickScore({{ submission.assignment.max_score|floatformat:0|add:'-5' }})">
+                                    <i class="fas fa-thumbs-up me-1"></i>Yaxshi ({{ submission.assignment.max_score|floatformat:0|add:'-5' }})
+                                </button>
+                                <button type="button" class="btn btn-outline-warning btn-sm" onclick="setQuickScore({{ submission.assignment.max_score|floatformat:0|add:'-15' }})">
+                                    <i class="fas fa-check me-1"></i>Qoniqarli ({{ submission.assignment.max_score|floatformat:0|add:'-15' }})
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="setQuickScore({{ submission.assignment.max_score|floatformat:0|add:'-25' }})">
+                                    <i class="fas fa-times me-1"></i>Kam ({{ submission.assignment.max_score|floatformat:0|add:'-25' }})
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Grading Criteria -->
+                        <div class="grading-criteria mb-4">
+                            <h6><i class="fas fa-list-check me-2"></i>Baholash Mezonlari</h6>
+                            <div class="criteria-list">
+                                <div class="criteria-item">
+                                    <input type="checkbox" id="criteria1" class="form-check-input">
+                                    <label for="criteria1" class="form-check-label">
+                                        Topshiriq talablari to'liq bajarilgan
+                                    </label>
+                                </div>
+                                <div class="criteria-item">
+                                    <input type="checkbox" id="criteria2" class="form-check-input">
+                                    <label for="criteria2" class="form-check-label">
+                                        Ish sifatli va tartibli bajarilgan
+                                    </label>
+                                </div>
+                                <div class="criteria-item">
+                                    <input type="checkbox" id="criteria3" class="form-check-input">
+                                    <label for="criteria3" class="form-check-label">
+                                        Muddatida topshirilgan
+                                    </label>
+                                </div>
+                                <div class="criteria-item">
+                                    <input type="checkbox" id="criteria4" class="form-check-input">
+                                    <label for="criteria4" class="form-check-label">
+                                        Ijodiy yondashuv ko'rsatilgan
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save me-2"></i>
+                                {% if submission.grade %}Ballni Yangilash{% else %}Ball Qo'yish{% endif %}
+                            </button>
+                            <a href="{% url 'assignment_detail' submission.assignment.id %}" class="btn btn-outline-secondary btn-lg ms-3">
+                                <i class="fas fa-arrow-left me-2"></i>Orqaga
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Student Info -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user me-2"></i>O'quvchi Ma'lumotlari
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="student-profile">
+                        <div class="student-avatar-large">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="student-info">
+                            <h5>{{ submission.student.first_name|default:submission.student.username }}</h5>
+                            <p class="text-muted">{{ submission.student.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="student-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Topshirilgan ishlar</div>
+                            <div class="stat-value">12</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">O'rtacha ball</div>
+                            <div class="stat-value">42.5</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Muddatida topshirish</div>
+                            <div class="stat-value">85%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assignment Info -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Topshiriq Ma'lumotlari
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-alt me-2"></i>Muddat
+                        </div>
+                        <div class="info-value">
+                            {{ submission.assignment.deadline|date:"d.m.Y H:i" }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-clock me-2"></i>Topshirilgan
+                        </div>
+                        <div class="info-value">
+                            {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                        </div>
+                        {% if submission.is_late %}
+                        <small class="text-danger">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Kech topshirilgan
+                        </small>
+                        {% else %}
+                        <small class="text-success">
+                            <i class="fas fa-check me-1"></i>Muddatida topshirilgan
+                        </small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-book me-2"></i>Fan
+                        </div>
+                        <div class="info-value">
+                            {{ submission.assignment.subject.name }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-star me-2"></i>Maksimal Ball
+                        </div>
+                        <div class="info-value">
+                            {{ submission.assignment.max_score }} ball
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Comments -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>Tezkor Izohlar
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="quick-comments">
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="addQuickComment('Ajoyib ish! Barcha talablar mukammal bajarilgan.')">
+                            👏 Ajoyib ish!
+                        </button>
+                        <button class="btn btn-outline-success btn-sm mb-2 w-100" onclick="addQuickComment('Yaxshi bajarilgan, lekin ba\'zi joylarni yaxshilash mumkin.')">
+                            ✅ Yaxshi bajarilgan
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm mb-2 w-100" onclick="addQuickComment('Topshiriq talablariga ko\'proq e\'tibor bering.')">
+                            ⚠️ Talablarga e'tibor
+                        </button>
+                        <button class="btn btn-outline-info btn-sm mb-2 w-100" onclick="addQuickComment('Keyingi safar muddatni unutmang.')">
+                            ⏰ Muddat haqida
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="addQuickComment('Qayta ko\'rib chiqing va yaxshilang.')">
+                            🔄 Qayta ishlash
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.submission-meta {
+    margin-top: 0.5rem;
+}
+
+.submission-status .badge {
+    padding: 0.5rem 1rem;
+}
+
+.description-content {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.file-preview {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.file-icon {
+    width: 50px;
+    height: 50px;
+    background: #4f46e5;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-info h6 {
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.comment-content {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.score-input-group {
+    position: relative;
+}
+
+.score-slider {
+    margin-top: 0.5rem;
+}
+
+.score-preview {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.score-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    color: white;
+    margin-bottom: 0.5rem;
+    background: #6c757d;
+    flex-direction: column;
+}
+
+.score-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.score-max {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.score-text {
+    font-weight: 600;
+    color: #495057;
+}
+
+.score-distribution {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.score-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.score-item:last-child {
+    margin-bottom: 0;
+}
+
+.score-label {
+    width: 120px;
+    font-weight: 500;
+}
+
+.score-bar {
+    flex: 1;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin: 0 0.75rem;
+    overflow: hidden;
+}
+
+.score-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.score-count {
+    width: 20px;
+    text-align: right;
+    font-weight: 600;
+}
+
+.quick-score-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.criteria-list {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.criteria-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.criteria-item:last-child {
+    margin-bottom: 0;
+}
+
+.criteria-item .form-check-input {
+    margin-right: 0.75rem;
+}
+
+.student-profile {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.student-avatar-large {
+    width: 80px;
+    height: 80px;
+    background: #4f46e5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    margin: 0 auto 1rem;
+}
+
+.student-info h5 {
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.student-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.stat-value {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.info-item {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.quick-comments .btn {
+    text-align: left;
+    font-size: 0.85rem;
+}
+
+/* Score-specific colors */
+.excellent { background: linear-gradient(135deg, #10b981, #059669); }
+.good { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.satisfactory { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.poor { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+@media (max-width: 768px) {
+    .submission-status {
+        margin-top: 1rem;
+    }
+    
+    .file-preview {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .file-info {
+        margin: 1rem 0;
+    }
+    
+    .file-actions {
+        justify-content: center;
+    }
+    
+    .quick-score-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+const maxScore = {{ submission.assignment.max_score }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const scoreInput = document.getElementById('id_score');
+    const scoreSlider = document.getElementById('scoreSlider');
+    
+    // Sync input and slider
+    scoreInput.addEventListener('input', function() {
+        scoreSlider.value = this.value;
+        updateScorePreview(this.value);
+    });
+    
+    // Initialize preview with current value
+    const currentScore = scoreInput.value || 0;
+    updateScorePreview(currentScore);
+    
+    // Form validation
+    const form = document.querySelector('.grading-form');
+    form.addEventListener('submit', function(e) {
+        const score = parseInt(scoreInput.value);
+        if (score < 0 || score > maxScore) {
+            e.preventDefault();
+            alert(`Ball 0 dan ${maxScore} gacha bo'lishi kerak!`);
+            return;
+        }
+        
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+
+function updateScoreFromSlider(value) {
+    document.getElementById('id_score').value = value;
+    updateScorePreview(value);
+}
+
+function updateScorePreview(score) {
+    const scoreBadge = document.getElementById('scoreBadge');
+    const scoreText = document.getElementById('scoreText');
+    const scoreNumber = scoreBadge.querySelector('.score-number');
+    
+    scoreNumber.textContent = score;
+    
+    const percentage = (score / maxScore) * 100;
+    let gradeLevel, gradeClass;
+    
+    if (percentage >= 90) {
+        gradeLevel = "A'lo";
+        gradeClass = "excellent";
+    } else if (percentage >= 70) {
+        gradeLevel = "Yaxshi";
+        gradeClass = "good";
+    } else if (percentage >= 50) {
+        gradeLevel = "Qoniqarli";
+        gradeClass = "satisfactory";
+    } else {
+        gradeLevel = "Qoniqarsiz";
+        gradeClass = "poor";
+    }
+    
+    scoreBadge.className = `score-badge ${gradeClass}`;
+    scoreText.textContent = `${gradeLevel} (${percentage.toFixed(1)}%)`;
+}
+
+function setQuickScore(score) {
+    document.getElementById('id_score').value = score;
+    document.getElementById('scoreSlider').value = score;
+    updateScorePreview(score);
+}
+
+function addQuickComment(comment) {
+    const commentTextarea = document.getElementById('id_comment');
+    const currentComment = commentTextarea.value;
+    
+    if (currentComment) {
+        commentTextarea.value = currentComment + '\n\n' + comment;
+    } else {
+        commentTextarea.value = comment;
+    }
+    
+    // Focus on textarea
+    commentTextarea.focus();
+    commentTextarea.scrollTop = commentTextarea.scrollHeight;
+}
+</script>
+{% endblock %}
