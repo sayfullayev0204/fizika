@@ -6,7 +6,7 @@ from django.http import JsonResponse, Http404
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User, Group
-from .models import Subject, Assignment, Submission, Grade, StudentGroup, Curriculum, Test, Question, TestResult
+from .models import Subject, Assignment, Submission, Grade, StudentGroup, Curriculum, Test, Question, TestResult,Video
 from .forms import AssignmentForm, SubmissionForm, GradeForm, CustomUserCreationForm, SubjectForm, CurriculumForm, TestForm, QuestionForm
 import json
 
@@ -465,3 +465,81 @@ def student_grades(request):
         'grades': grades,
     }
     return render(request, 'student/grades.html', context)
+
+# your_app/views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.core.paginator import Paginator
+from .models import Video, Subject
+from .forms import VideoForm
+from django.contrib import messages
+
+def videos(request):
+    videos = Video.objects.all().order_by('-created_at')
+    subjects = Subject.objects.all()
+    selected_subject = request.GET.get('subject')
+
+    if selected_subject:
+        videos = videos.filter(subject_id=selected_subject)
+
+    # Pagination
+    paginator = Paginator(videos, 10)  # 10 videos per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'subjects': subjects,
+        'selected_subject': selected_subject,
+    }
+    return render(request, 'videos/list.html', context)
+
+def create_video(request):
+    if not (request.user.groups.filter(name='Teachers').exists() or request.user.is_superuser):
+        messages.error(request, "Sizda video qo'shish uchun ruxsat yo'q.")
+        return redirect('videos')
+
+    if request.method == 'POST':
+        form = VideoForm(request.POST, request.FILES)
+        if form.is_valid():
+            video = form.save(commit=False)
+            video.created_by = request.user  # Assuming you add a created_by field to Video model
+            video.save()
+            messages.success(request, "Video muvaffaqiyatli qo'shildi!")
+            return redirect('videos')
+    else:
+        form = VideoForm()
+
+    context = {
+        'form': form,
+        'title': 'Yangi Video Qo‘shish',
+    }
+    return render(request, 'videos/create.html', context)
+
+def video_detail(request, id):
+    video = get_object_or_404(Video, id=id)
+    context = {
+        'video': video,
+    }
+    return render(request, 'videos/detail.html', context)
+
+def edit_video(request, id):
+    if not (request.user.groups.filter(name='Teachers').exists() or request.user.is_superuser):
+        messages.error(request, "Sizda video tahrirlash uchun ruxsat yo'q.")
+        return redirect('videos')
+
+    video = get_object_or_404(Video, id=id)
+    if request.method == 'POST':
+        form = VideoForm(request.POST, request.FILES, instance=video)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Video muvaffaqiyatli tahrirlandi!")
+            return redirect('videos')
+    else:
+        form = VideoForm(instance=video)
+
+    context = {
+        'form': form,
+        'video': video,
+        'title': 'Video Tahrirlash',
+    }
+    return render(request, 'videos/edit.html', context)

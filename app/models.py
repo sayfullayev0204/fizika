@@ -230,3 +230,23 @@ class TestResult(models.Model):
         verbose_name_plural = "Test natijalari"
         ordering = ['-completed_at']
         unique_together = ['test', 'student']
+
+# your_app/models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class Video(models.Model):
+    title = models.CharField(max_length=200, verbose_name="Video nomi")
+    description = models.TextField(blank=True, verbose_name="Tavsif")
+    file = models.FileField(upload_to='videos/', verbose_name="Video fayl")
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE, verbose_name="Fan", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Yaratuvchi")
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "Video"
+        verbose_name_plural = "Videolar"
+        ordering = ['-created_at']

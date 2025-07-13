@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ video.title }} - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="h2 mb-4">
+        <i class="fas fa-video me-3 text-primary"></i>{{ video.title }}
+    </h1>
+
+    <div class="card">
+        <div class="card-body">
+            <video controls class="w-100 mb-3" style="max-height: 400px;">
+                <source src="{{ video.file.url }}" type="video/mp4">
+                Brauzeringiz video oynatishni qo‘llab-quvvatlamaydi.
+            </video>
+            
+            {% if video.description %}
+            <p class="text-muted mb-3">{{ video.description }}</p>
+            {% endif %}
+            
+            <div class="video-info mb-3">
+                <div class="info-item">
+                    <i class="fas fa-bookmark text-primary me-2"></i>
+                    <span>Fan: {% if video.subject %}{{ video.subject.name }}{% else %}Fansiz{% endif %}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-user text-info me-2"></i>
+                    <span>Yaratuvchi: {{ video.created_by.first_name|default:video.created_by.username|default:"Noma'lum" }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calendar text-primary me-2"></i>
+                    <span>Yuklangan: {{ video.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'videos' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Orqaga
+                </a>
+                {% if user.groups.all.0.name == 'Teachers' or user.is_superuser %}
+                <a href="{% url 'edit_video' video.id %}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>Tahrirlash
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.video-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.info-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}

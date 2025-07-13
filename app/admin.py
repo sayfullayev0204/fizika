@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Subject, StudentGroup, Assignment, Submission, Grade, Curriculum, Test, Question, TestResult
+from .models import Subject, StudentGroup, Assignment, Submission, Grade, Curriculum, Test, Question, TestResult,Video
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
@@ -85,3 +85,14 @@ class TestResultAdmin(admin.ModelAdmin):
     def percentage(self, obj):
         return f"{obj.get_percentage()}%"
     percentage.short_description = 'Foiz'
+
+@admin.register(Video)
+class VideoAdmin(admin.ModelAdmin):
+    list_display = ['title', 'created_at']
+    list_filter = ['subject', 'created_at']
+    search_fields = ['title', 'description']
+    
+    def has_video_file(self, obj):
+        return bool(obj.video_file)
+    has_video_file.boolean = True
+    has_video_file.short_description = 'Video fayl mavjudmi'

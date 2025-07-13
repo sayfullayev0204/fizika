@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Assignment, Submission, Grade, Subject, StudentGroup, Curriculum, Test, Question
+from .models import Assignment, Submission, Grade, Subject, StudentGroup, Curriculum, Test, Question,Video
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(
@@ -255,4 +255,19 @@ class QuestionForm(forms.ModelForm):
                 'value': 1,
                 'placeholder': 'Ball qiymati (1-10)'
             }),
+        }
+
+# your_app/forms.py
+from django import forms
+from .models import Video, Subject
+
+class VideoForm(forms.ModelForm):
+    class Meta:
+        model = Video
+        fields = ['title', 'description', 'file', 'subject']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Video nomini kiriting'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Video haqida tavsif'}),
+            'file': forms.FileInput(attrs={'class': 'form-control'}),
+            'subject': forms.Select(attrs={'class': 'form-select'}),
         }

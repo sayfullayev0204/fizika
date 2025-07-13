@@ -46,4 +46,9 @@ urlpatterns = [
     path('tests/<int:test_id>/', views.test_detail, name='test_detail'),
     path('tests/<int:test_id>/take/', views.take_test, name='take_test'),
     path('tests/<int:test_id>/add-question/', views.add_question, name='add_question'),
+
+    path('videos/', views.videos, name='videos'),
+    path('video/create/', views.create_video, name='create_video'),
+    path('video/<int:id>/', views.video_detail, name='video_detail'),
+    path('video/<int:id>/edit/', views.edit_video, name='edit_video'),
 ]
