@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Assignment, Submission, Grade, Subject, StudentGroup, Curriculum, Test, Question,Video
+from .models import Assignment, Submission, Grade, Subject, StudentGroup, Curriculum, Test, Question, Document
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(
@@ -73,7 +73,7 @@ class SubjectForm(forms.ModelForm):
 class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = ['title', 'description', 'subject', 'groups', 'file', 'deadline', 'max_score']
+        fields = ['title', 'description', 'assignment_type', 'subject', 'groups', 'file', 'deadline', 'max_score']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -84,6 +84,7 @@ class AssignmentForm(forms.ModelForm):
                 'rows': 4,
                 'placeholder': 'Topshiriq tavsifini kiriting'
             }),
+            'assignment_type': forms.Select(attrs={'class': 'form-select'}),
             'subject': forms.Select(attrs={'class': 'form-select'}),
             'groups': forms.CheckboxSelectMultiple(),
             'file': forms.FileInput(attrs={'class': 'form-control'}),
@@ -120,7 +121,6 @@ class SubmissionForm(forms.ModelForm):
             }),
         }
 
-
 class GradeForm(forms.ModelForm):
     class Meta:
         model = Grade
@@ -132,31 +132,23 @@ class GradeForm(forms.ModelForm):
                 'placeholder': 'Ball kiriting (0-50)'
             }),
             'comment': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
+                'class': 'form-control', 
+                'rows': 3, 
                 'placeholder': 'Baho haqida izoh'
             }),
         }
     
     def __init__(self, *args, **kwargs):
-        self.submission = kwargs.pop('submission', None)
+        submission = kwargs.pop('submission', None)
         super().__init__(*args, **kwargs)
-        if self.submission:
-            max_score = self.submission.assignment.max_score
+        if submission:
+            max_score = submission.assignment.max_score
             self.fields['score'].widget.attrs.update({
                 'max': max_score,
                 'placeholder': f'Ball kiriting (0-{max_score})'
             })
             self.fields['score'].help_text = f'Maksimal ball: {max_score}'
-    
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if not instance.pk and self.submission:  # New instance, set submission
-            instance.submission = self.submission
-        if commit:
-            instance.save()
-        return instance
-    
+
 class CurriculumForm(forms.ModelForm):
     class Meta:
         model = Curriculum
@@ -256,6 +248,30 @@ class QuestionForm(forms.ModelForm):
                 'placeholder': 'Ball qiymati (1-10)'
             }),
         }
+
+class DocumentForm(forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['title', 'document_type', 'file', 'subject']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Hujjat nomini kiriting'
+            }),
+            'document_type': forms.Select(attrs={'class': 'form-select'}),
+            'file': forms.FileInput(attrs={
+                'class': 'form-control', 
+                'accept': '.pdf,.doc,.docx,.ppt,.pptx'
+            }),
+            'subject': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['subject'].queryset = Subject.objects.filter(teacher=user)
+            self.fields['subject'].empty_label = "Umumiy hujjat"
 
 # your_app/forms.py
 from django import forms

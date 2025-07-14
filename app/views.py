@@ -6,8 +6,8 @@ from django.http import JsonResponse, Http404
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User, Group
-from .models import Subject, Assignment, Submission, Grade, StudentGroup, Curriculum, Test, Question, TestResult,Video
-from .forms import AssignmentForm, SubmissionForm, GradeForm, CustomUserCreationForm, SubjectForm, CurriculumForm, TestForm, QuestionForm
+from .models import Subject, Assignment, Submission, Grade, StudentGroup, Curriculum, Test, Question, TestResult, Document
+from .forms import AssignmentForm, SubmissionForm, GradeForm, CustomUserCreationForm, SubjectForm, CurriculumForm, TestForm, QuestionForm, DocumentForm
 import json
 
 def home(request):
@@ -221,6 +221,7 @@ def test_list(request):
     }
     return render(request, 'tests/list.html', context)
 
+
 @login_required
 def create_test(request):
     if not (request.user.groups.filter(name='Teachers').exists() or request.user.is_superuser):
@@ -353,6 +354,38 @@ def assignment_list(request, subject_id):
     return render(request, template, context)
 
 @login_required
+def assignment_list_by_type(request, subject_id, assignment_type):
+    subject = get_object_or_404(Subject, id=subject_id)
+    
+    # O'qituvchi uchun
+    if subject.teacher == request.user or request.user.is_superuser:
+        assignments = Assignment.objects.filter(subject=subject, assignment_type=assignment_type)
+        template = 'teacher/assignment_list_by_type.html'
+    else:
+        # O'quvchi uchun - faqat o'zi a'zo bo'lgan guruhlardagi topshiriqlar
+        user_groups = StudentGroup.objects.filter(students=request.user, subject=subject)
+        assignments = Assignment.objects.filter(
+            subject=subject,
+            assignment_type=assignment_type,
+            groups__in=user_groups
+        ).distinct()
+        template = 'student/assignment_list_by_type.html'
+    
+    type_names = {
+        'amaliy': 'Amaliy',
+        'laboratoriya': 'Laboratoriya',
+        'maruza': 'Ma\'ruza'
+    }
+    
+    context = {
+        'subject': subject,
+        'assignments': assignments,
+        'assignment_type': assignment_type,
+        'type_name': type_names.get(assignment_type, assignment_type),
+    }
+    return render(request, template, context)
+
+@login_required
 def assignment_detail(request, assignment_id):
     assignment = get_object_or_404(Assignment, id=assignment_id)
     
@@ -422,7 +455,6 @@ def submit_assignment(request, assignment_id):
     }
     return render(request, 'student/submit_assignment.html', context)
 
-
 @login_required
 def grade_submission(request, submission_id):
     submission = get_object_or_404(Submission, id=submission_id)
@@ -439,9 +471,19 @@ def grade_submission(request, submission_id):
     if request.method == 'POST':
         form = GradeForm(request.POST, instance=grade, submission=submission)
         if form.is_valid():
-            grade = form.save(commit=False)  # Save without committing to DB
-            if not grade.submission:  # Ensure submission is set for new grades
-                grade.submission = submission
+            grade = form.save(commit=False)
+            grade.submission = submission
+            
+            # Validate score
+            max_score = submission.assignment.max_score
+            if grade.score < 0 or grade.score > max_score:
+                messages.error(request, f'Ball 0 dan {max_score} gacha bo\'lishi kerak!')
+                return render(request, 'teacher/grade_submission.html', {
+                    'submission': submission,
+                    'form': form,
+                    'grade': grade,
+                })
+            
             grade.save()
             messages.success(request, 'Ball muvaffaqiyatli qo\'yildi!')
             return redirect('assignment_detail', assignment_id=submission.assignment.id)
@@ -456,6 +498,7 @@ def grade_submission(request, submission_id):
         'grade': grade,
     }
     return render(request, 'teacher/grade_submission.html', context)
+
 @login_required
 def student_grades(request):
     submissions = Submission.objects.filter(student=request.user)
@@ -465,6 +508,77 @@ def student_grades(request):
         'grades': grades,
     }
     return render(request, 'student/grades.html', context)
+
+# Document views
+@login_required
+def document_list(request):
+    documents = Document.objects.all().order_by('-created_at')
+    subjects = Subject.objects.all()
+    
+    # Filter by subject if provided
+    subject_id = request.GET.get('subject')
+    if subject_id:
+        documents = documents.filter(subject_id=subject_id)
+    
+    context = {
+        'documents': documents,
+        'subjects': subjects,
+        'selected_subject': int(subject_id) if subject_id else None,
+    }
+    return render(request, 'documents/list.html', context)
+
+@login_required
+def document_list_by_type(request, document_type):
+    documents = Document.objects.filter(document_type=document_type).order_by('-created_at')
+    subjects = Subject.objects.all()
+    
+    # Filter by subject if provided
+    subject_id = request.GET.get('subject')
+    if subject_id:
+        documents = documents.filter(subject_id=subject_id)
+    
+    type_names = {
+        'meyoriy': 'Meyoriy hujjatlar',
+        'mustaqil': 'Mustaqil ishlash uchun masalalar',
+        'yakuniy': 'Yakuniy nazorat savollari'
+    }
+    
+    context = {
+        'documents': documents,
+        'subjects': subjects,
+        'document_type': document_type,
+        'type_name': type_names.get(document_type, document_type),
+        'selected_subject': int(subject_id) if subject_id else None,
+    }
+    return render(request, 'documents/list_by_type.html', context)
+
+@login_required
+def create_document(request):
+    if not (request.user.groups.filter(name='Teachers').exists() or request.user.is_superuser):
+        messages.error(request, 'Sizga bu sahifaga kirish ruxsati yo\'q!')
+        return redirect('document_list')
+    
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.created_by = request.user
+            document.save()
+            messages.success(request, 'Hujjat muvaffaqiyatli yaratildi!')
+            return redirect('document_list_by_type', document_type=document.document_type)
+    else:
+        form = DocumentForm(user=request.user)
+    
+    return render(request, 'documents/create.html', {'form': form})
+
+@login_required
+def document_detail(request, document_id):
+    document = get_object_or_404(Document, id=document_id)
+    
+    context = {
+        'document': document,
+    }
+    return render(request, 'documents/detail.html', context)
 
 # your_app/views.py
 from django.shortcuts import render, redirect, get_object_or_404

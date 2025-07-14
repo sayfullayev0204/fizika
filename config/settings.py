@@ -31,14 +31,15 @@ CORS_ALLOWED_ORIGINS = [
     "https://sub.example.com",
     "http://localhost:8080",
     "http://127.0.0.1:8000",
-    'https://phoenix-rapid-factually.ngrok-free.app'
+    'https://phoenix-rapid-factually.ngrok-free.app',
+    'https://sayfullayevdev.uz'
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:8000",
     "https://phoenix-rapid-factually.ngrok-free.app",  # Add your ngrok URL here
     'https://psix.onrender.com',
-    
+    'https://sayfullayevdev.uz',
     'https://phoenix-rapid-factually.ngrok-free.app'
 ]
 # Application definition

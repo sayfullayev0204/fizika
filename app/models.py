@@ -35,8 +35,15 @@ def assignment_file_path(instance, filename):
     return f'assignments/{instance.subject.id}/{filename}'
 
 class Assignment(models.Model):
+    ASSIGNMENT_TYPES = [
+        ('amaliy', 'Amaliy'),
+        ('laboratoriya', 'Laboratoriya'),
+        ('maruza', 'Ma\'ruza'),
+    ]
+    
     title = models.CharField(max_length=200, verbose_name="Topshiriq nomi")
     description = models.TextField(verbose_name="Tavsif")
+    assignment_type = models.CharField(max_length=20, choices=ASSIGNMENT_TYPES, default='amaliy', verbose_name="Topshiriq turi")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, verbose_name="Fan")
     groups = models.ManyToManyField(StudentGroup, verbose_name="Guruhlar")
     file = models.FileField(upload_to=assignment_file_path, blank=True, null=True, verbose_name="Fayl")
@@ -47,6 +54,14 @@ class Assignment(models.Model):
     
     def is_expired(self):
         return timezone.now() > self.deadline
+    
+    def get_type_display_class(self):
+        type_classes = {
+            'amaliy': 'primary',
+            'laboratoriya': 'success',
+            'maruza': 'info'
+        }
+        return type_classes.get(self.assignment_type, 'secondary')
     
     def __str__(self):
         return self.title
@@ -106,14 +121,13 @@ class Grade(models.Model):
     
     def clean(self):
         from django.core.exceptions import ValidationError
-        if not hasattr(self, 'submission') or self.submission is None:
-            return  # Skip validation if submission is not set
         max_score = self.submission.assignment.max_score
         if self.score < 0 or self.score > max_score:
             raise ValidationError(f'Ball 0 dan {max_score} gacha bo\'lishi kerak')
-        def __str__(self):
-            return f"{self.submission.student.username} - {self.score}/{self.submission.assignment.max_score}"
-        
+    
+    def __str__(self):
+        return f"{self.submission.student.username} - {self.score}/{self.submission.assignment.max_score}"
+    
     class Meta:
         verbose_name = "Baho"
         verbose_name_plural = "Baholar"
@@ -230,6 +244,39 @@ class TestResult(models.Model):
         verbose_name_plural = "Test natijalari"
         ordering = ['-completed_at']
         unique_together = ['test', 'student']
+
+def document_file_path(instance, filename):
+    return f'documents/{filename}'
+
+class Document(models.Model):
+    DOCUMENT_TYPES = [
+        ('meyoriy', 'Meyoriy hujjat'),
+        ('mustaqil', 'Mustaqil ishlash uchun masala'),
+        ('yakuniy', 'Yakuniy nazorat savoli'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name="Hujjat nomi")
+    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES, verbose_name="Hujjat turi")
+    file = models.FileField(upload_to=document_file_path, verbose_name="Fayl")
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, verbose_name="Fan", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Yaratuvchi")
+    
+    def get_type_display_class(self):
+        type_classes = {
+            'meyoriy': 'warning',
+            'mustaqil': 'info',
+            'yakuniy': 'danger'
+        }
+        return type_classes.get(self.document_type, 'secondary')
+    
+    def __str__(self):
+        return self.title
+    
+    class Meta:
+        verbose_name = "Hujjat"
+        verbose_name_plural = "Hujjatlar"
+        ordering = ['-created_at']
 
 # your_app/models.py
 from django.db import models

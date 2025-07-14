@@ -10,7 +10,8 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="{% load static %}{% static 'css/style.css' %}" rel="stylesheet">
+    {% load static %}
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
     
     <style>
         :root {
@@ -23,6 +24,7 @@
             --light-bg: #f8f9fa;
             --dark-text: #2c3e50;
             --muted-text: #6c757d;
+            --sidebar-width: 280px;
         }
         
         body {
@@ -34,23 +36,161 @@
         .navbar {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 70px;
+            padding: 0;
         }
         
         .navbar-brand {
             font-weight: 700;
             font-size: 1.5rem;
+            padding: 0 1.5rem;
+            line-height: 70px;
+            height: 70px;
         }
         
-        .navbar-nav .nav-link {
-            font-weight: 500;
+        .sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - 70px);
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 1000;
             transition: all 0.3s ease;
-            border-radius: 8px;
-            margin: 0 0.25rem;
         }
         
-        .navbar-nav .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-1px);
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-toggle:hover {
+            background: var(--primary-dark);
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .sidebar-menu .menu-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .sidebar-menu .section-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-menu .menu-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--dark-text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-menu .menu-item:hover {
+            background: var(--light-bg);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+        
+        .sidebar-menu .menu-item.active {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+        
+        .sidebar-menu .menu-item i {
+            width: 20px;
+            margin-right: 0.75rem;
+            text-align: center;
+        }
+        
+        .sidebar-menu .submenu {
+            padding-left: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .sidebar-menu .submenu.show {
+            max-height: 300px;
+        }
+        
+        .sidebar-menu .submenu .menu-item {
+            padding-left: 3.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+            min-height: calc(100vh - 70px);
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+        
+        .user-menu {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+        }
+        
+        .user-menu .dropdown-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .user-menu .dropdown-toggle:after {
+            display: none;
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
         }
         
         .dropdown-menu {
@@ -119,6 +259,12 @@
             color: white;
             padding: 2rem 0;
             margin-top: 3rem;
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s ease;
+        }
+        
+        .footer.expanded {
+            margin-left: 70px;
         }
         
         .notification {
@@ -158,12 +304,20 @@
         }
         
         @media (max-width: 768px) {
-            .navbar-nav {
-                text-align: center;
+            .sidebar {
+                transform: translateX(-100%);
             }
             
-            .navbar-nav .nav-link {
-                margin: 0.25rem 0;
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .footer {
+                margin-left: 0;
             }
         }
     </style>
@@ -171,130 +325,177 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'home' %}">
                 <i class="fas fa-graduation-cap me-2"></i>Ta'lim Tizimi
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">
-                            <i class="fas fa-home me-1"></i>Bosh sahifa
-                        </a>
-                    </li>
-                    
-                    {% if user.is_authenticated %}
-                        {% if user.groups.all.0.name == 'Teachers' or user.is_superuser %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-chalkboard-teacher me-1"></i>O'qituvchi
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'teacher_dashboard' %}">
-                                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'create_assignment' %}">
-                                        <i class="fas fa-plus me-2"></i>Yangi topshiriq
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'create_subject' %}">
-                                        <i class="fas fa-book me-2"></i>Yangi fan
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{% url 'curriculum_list' %}">
-                                        <i class="fas fa-file-alt me-2"></i>O'quv rejalar
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'test_list' %}">
-                                        <i class="fas fa-question-circle me-2"></i>Testlar
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'videos' %}">
-                                        <i class="fas fa-video me-2"></i>Videolar
-                                    </a></li>
-                                </ul>
-                            </li>
-                        {% else %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user-graduate me-1"></i>O'quvchi
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'student_dashboard' %}">
-                                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'student_grades' %}">
-                                        <i class="fas fa-star me-2"></i>Baholarim
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{% url 'curriculum_list' %}">
-                                        <i class="fas fa-file-alt me-2"></i>O'quv rejalar
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'test_list' %}">
-                                        <i class="fas fa-question-circle me-2"></i>Testlar
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'videos' %}">
-                                        <i class="fas fa-video me-2"></i>Videolar
-                                    </a></li>
-                                </ul>
-                            </li>
-                        {% endif %}
-                    {% endif %}
-                    
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'about' %}">
-                            <i class="fas fa-info-circle me-1"></i>Haqida
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'author' %}">
-                            <i class="fas fa-user me-1"></i>Muallif
-                        </a>
-                    </li>
-                </ul>
-                
-                <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user me-1"></i>{{ user.first_name|default:user.username }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#">
-                                    <i class="fas fa-user-cog me-2"></i>Profil
-                                </a></li>
-                                <li><a class="dropdown-item" href="#">
-                                    <i class="fas fa-cog me-2"></i>Sozlamalar
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'logout' %}">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Chiqish
-                                </a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">
-                                <i class="fas fa-sign-in-alt me-1"></i>Kirish
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">
-                                <i class="fas fa-user-plus me-1"></i>Ro'yxatdan o'tish
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
+            {% if user.is_authenticated %}
+                <div class="user-menu">
+                    <div class="dropdown">
+                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                {{ user.first_name.0|default:user.username.0|upper }}
+                            </div>
+                            <span>{{ user.first_name|default:user.username }}</span>
+                            <i class="fas fa-chevron-down ms-1"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-user-cog me-2"></i>Profil
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-cog me-2"></i>Sozlamalar
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Chiqish
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </nav>
+    
+    {% if user.is_authenticated %}
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="sidebar-menu">
+            <!-- Dashboard -->
+            <div class="menu-section">
+                <div class="section-title">Dashboard</div>
+                {% if user.groups.all.0.name == 'Teachers' or user.is_superuser %}
+                    <a href="{% url 'teacher_dashboard' %}" class="menu-item">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>O'qituvchi Dashboard</span>
+                    </a>
+                {% else %}
+                    <a href="{% url 'student_dashboard' %}" class="menu-item">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>O'quvchi Dashboard</span>
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- Topshiriqlar -->
+            <div class="menu-section">
+                <div class="section-title">Topshiriqlar</div>
+                    {% for subject in user.studentgroup_set.all|slice:":5" %}
+                        <a href="{% url 'assignment_list_by_type' subject.subject.id 'amaliy' %}" class="menu-item">
+                            <i class="fas fa-laptop-code"></i>
+                            <span>{{ subject.subject.name }} - Amaliy</span>
+                        </a>
+                        <a href="{% url 'assignment_list_by_type' subject.subject.id 'laboratoriya' %}" class="menu-item">
+                            <i class="fas fa-flask"></i>
+                            <span>{{ subject.subject.name }} - Laboratoriya</span>
+                        </a>
+                        <a href="{% url 'assignment_list_by_type' subject.subject.id 'maruza' %}" class="menu-item">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span>{{ subject.subject.name }} - Ma'ruza</span>
+                        </a>
+                    {% endfor %}
+            </div>
+            
+            <!-- Hujjatlar -->
+            <div class="menu-section">
+                <div class="section-title">Hujjatlar</div>
+                <a href="{% url 'document_list_by_type' 'meyoriy' %}" class="menu-item">
+                    <i class="fas fa-file-contract"></i>
+                    <span>Meyoriy hujjatlar</span>
+                </a>
+                <a href="{% url 'document_list_by_type' 'mustaqil' %}" class="menu-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Mustaqil ishlash</span>
+                </a>
+                <a href="{% url 'document_list_by_type' 'yakuniy' %}" class="menu-item">
+                    <i class="fas fa-file-signature"></i>
+                    <span>Yakuniy nazorat</span>
+                </a>
+            </div>
+            
+            <!-- Testlar -->
+            <div class="menu-section">
+                <div class="section-title">Testlar</div>
+                <a href="{% url 'test_list' %}" class="menu-item">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Testlar</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">Videolar</div>
+                <a href="{% url 'videos' %}" class="menu-item">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Videolar</span>
+                </a>
+            </div>
+            
+            <!-- O'quv rejalar -->
+            <div class="menu-section">
+                <div class="section-title">O'quv rejalar</div>
+                <a href="{% url 'curriculum_list' %}" class="menu-item">
+                    <i class="fas fa-book-open"></i>
+                    <span>O'quv rejalar</span>
+                </a>
+            </div>
+            
+            {% if user.groups.all.0.name == 'Teachers' or user.is_superuser %}
+            <!-- O'qituvchi uchun -->
+            <div class="menu-section">
+                <div class="section-title">Yaratish</div>
+                <a href="{% url 'create_subject' %}" class="menu-item">
+                    <i class="fas fa-plus"></i>
+                    <span>Yangi fan</span>
+                </a>
+                <a href="{% url 'create_assignment' %}" class="menu-item">
+                    <i class="fas fa-plus"></i>
+                    <span>Yangi topshiriq</span>
+                </a>
+                <a href="{% url 'create_test' %}" class="menu-item">
+                    <i class="fas fa-plus"></i>
+                    <span>Yangi test</span>
+                </a>
+                <a href="{% url 'create_document' %}" class="menu-item">
+                    <i class="fas fa-plus"></i>
+                    <span>Yangi hujjat</span>
+                </a>
+            </div>
+            {% else %}
+            <!-- O'quvchi uchun -->
+            <div class="menu-section">
+                <div class="section-title">Mening</div>
+                <a href="{% url 'student_grades' %}" class="menu-item">
+                    <i class="fas fa-star"></i>
+                    <span>Baholarim</span>
+                </a>
+            </div>
+            {% endif %}
+            
+            <!-- Boshqa -->
+            <div class="menu-section">
+                <div class="section-title">Boshqa</div>
+                <a href="{% url 'about' %}" class="menu-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Haqida</span>
+                </a>
+                <a href="{% url 'author' %}" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    <span>Muallif</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
     <!-- Messages -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="margin-left: {% if user.is_authenticated %}var(--sidebar-width){% else %}0{% endif %}; margin-right: 2rem; margin-top: 1rem;">
                 <i class="fas fa-info-circle me-2"></i>{{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -302,13 +503,13 @@
     {% endif %}
     
     <!-- Main Content -->
-    <main>
+    <main class="main-content" id="mainContent">
         {% block content %}
         {% endblock %}
     </main>
     
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" id="footer">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
@@ -344,9 +545,26 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script src="{% load static %}{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
     
     <script>
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const footer = document.getElementById('footer');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            footer.classList.toggle('expanded');
+        }
+        
+        // Submenu toggle
+        function toggleSubmenu(submenuId) {
+            const submenu = document.getElementById(submenuId);
+            submenu.classList.toggle('show');
+        }
+        
         // Global notification function
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
@@ -412,6 +630,16 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             initializeCountdownTimers();
+            
+            // Set active menu item
+            const currentPath = window.location.pathname;
+            const menuItems = document.querySelectorAll('.sidebar-menu .menu-item');
+            
+            menuItems.forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+            });
         });
     </script>
 </body>

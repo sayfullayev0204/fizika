@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subject.name }} - {{ type_name }} - Ta'lim Tizimi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-book me-3"></i>{{ subject.name }} - {{ type_name }}</h2>
+                    <p class="text-muted">Jami {{ assignments.count }} ta topshiriq</p>
+                </div>
+                <a href="{% url 'create_assignment' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Yangi topshiriq
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assignments List -->
+    <div class="row">
+        {% if assignments %}
+            {% for assignment in assignments %}
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-{{ assignment.get_type_display_class }}">
+                                {{ assignment.get_assignment_type_display }}
+                            </span>
+                            <small class="text-muted">{{ assignment.created_at|date:"d.m.Y" }}</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ assignment.title }}</h5>
+                            <p class="card-text">{{ assignment.description|truncatechars:100 }}</p>
+                            <div class="assignment-meta">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <span class="countdown-timer" data-deadline="{{ assignment.deadline|date:'c' }}"></span>
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-star me-1"></i>{{ assignment.max_score }} ball
+                                    </small>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-users me-1"></i>{{ assignment.groups.count }} guruh
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-upload me-1"></i>{{ assignment.submission_set.count }} topshirilgan
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Ko'rish
+                                </a>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="editAssignment({{ assignment.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteAssignment({{ assignment.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-tasks fa-5x text-muted mb-3"></i>
+                    <h4>{{ type_name }} topshiriqlari topilmadi</h4>
+                    <p class="text-muted">Hozircha bu fanda {{ type_name|lower }} topshiriqlari mavjud emas</p>
+                    <a href="{% url 'create_assignment' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Birinchi topshiriqni yarating
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function editAssignment(id) {
+    showNotification('Topshiriqni tahrirlash funksiyasi tez orada qo\'shiladi!', 'info');
+}
+
+function deleteAssignment(id) {
+    if (confirm('Topshiriqni o\'chirishni xohlaysizmi?')) {
+        showNotification('Topshiriqni o\'chirish funksiyasi tez orada qo\'shiladi!', 'warning');
+    }
+}
+</script>
+{% endblock %}
